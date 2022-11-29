@@ -3,6 +3,7 @@ import math
 import os
 import sys
 import warnings
+import datetime
 
 import torch
 import numpy as np
@@ -72,7 +73,7 @@ class StableDiffusionProcessing():
     """
     The first set of paramaters: sd_models -> do_not_reload_embeddings represent the minimum required to create a StableDiffusionProcessing
     """
-    def __init__(self, sd_model=None, outpath_samples=None, outpath_grids=None, prompt: str = "", styles: List[str] = None, seed: int = -1, subseed: int = -1, subseed_strength: float = 0, seed_resize_from_h: int = -1, seed_resize_from_w: int = -1, seed_enable_extras: bool = True, sampler_name: str = None, batch_size: int = 1, n_iter: int = 1, steps: int = 50, cfg_scale: float = 7.0, width: int = 512, height: int = 512, restore_faces: bool = False, tiling: bool = False, do_not_save_samples: bool = False, do_not_save_grid: bool = False, extra_generation_params: Dict[Any, Any] = None, overlay_images: Any = None, negative_prompt: str = None, eta: float = None, do_not_reload_embeddings: bool = False, denoising_strength: float = 0, ddim_discretize: str = None, s_churn: float = 0.0, s_tmax: float = None, s_tmin: float = 0.0, s_noise: float = 1.0, override_settings: Dict[str, Any] = None, sampler_index: int = None):
+    def __init__(self, sd_model=None, outpath_samples=None, outpath_grids=None, prompt: str = "", styles: List[str] = None, seed: int = -1, subseed: int = -1, subseed_strength: float = 0, seed_resize_from_h: int = -1, seed_resize_from_w: int = -1, seed_enable_extras: bool = True, sampler_name: str = None, batch_size: int = 1, n_iter: int = 1, steps: int = 50, cfg_scale: float = 7.0, width: int = 512, height: int = 512, restore_faces: bool = False, tiling: bool = False, do_not_save_samples: bool = False, do_not_save_grid: bool = False, extra_generation_params: Dict[Any, Any] = None, overlay_images: Any = None, negative_prompt: str = None, eta: float = None, do_not_reload_embeddings: bool = False, denoising_strength: float = 0, ddim_discretize: str = None, s_churn: float = 0.0, s_tmax: float = None, s_tmin: float = 0.0, s_noise: float = 1.0, override_settings: Dict[str, Any] = None, sampler_index: int = None, sampling_start:datetime=None , sampling_end:datetime=None):
         if sampler_index is not None:
             print("sampler_index argument for StableDiffusionProcessing does not do anything; use sampler_name", file=sys.stderr)
 
@@ -127,6 +128,9 @@ class StableDiffusionProcessing():
         self.all_negative_prompts = None
         self.all_seeds = None
         self.all_subseeds = None
+
+        self.sampling_start = sampling_start
+        self.sampling_end = sampling_end
 
     def txt2img_image_conditioning(self, x, width=None, height=None):
         if self.sampler.conditioning_key not in {'hybrid', 'concat'}:
@@ -203,7 +207,7 @@ class StableDiffusionProcessing():
 
 
 class Processed:
-    def __init__(self, p: StableDiffusionProcessing, images_list, seed=-1, info="", subseed=None, all_prompts=None, all_negative_prompts=None, all_seeds=None, all_subseeds=None, index_of_first_image=0, infotexts=None):
+    def __init__(self, p: StableDiffusionProcessing, images_list, seed=-1, info="", subseed=None, all_prompts=None, all_negative_prompts=None, all_seeds=None, all_subseeds=None, index_of_first_image=0, infotexts=None, sampling_start:datetime=None , sampling_end:datetime=None):
         self.images = images_list
         self.prompt = p.prompt
         self.negative_prompt = p.negative_prompt
@@ -248,6 +252,9 @@ class Processed:
         self.all_subseeds = all_subseeds or p.all_subseeds or [self.subseed]
         self.infotexts = infotexts or [info]
 
+        self.sampling_start = sampling_start
+        self.sampling_end = sampling_end
+
     def js(self):
         obj = {
             "prompt": self.all_prompts[0],
@@ -278,6 +285,8 @@ class Processed:
             "job_timestamp": self.job_timestamp,
             "clip_skip": self.clip_skip,
             "is_using_inpainting_conditioning": self.is_using_inpainting_conditioning,
+            "sampling_start_timestamp": self.sampling_start,
+            "sampling_end_timestamp": self.sampling_end
         }
 
         return json.dumps(obj)
@@ -387,6 +396,10 @@ def create_infotext(p, all_prompts, all_seeds, all_subseeds, comments, iteration
 
     clip_skip = getattr(p, 'clip_skip', opts.CLIP_stop_at_last_layers)
 
+    total_time = None
+    if p.sampling_start != None and p.sampling_end != None and p.sampling_end < p.sampling_start:
+        total_time = p.sampling_end - p.sampling_start
+
     generation_params = {
         "Steps": p.steps,
         "Sampler": p.sampler_name,
@@ -408,6 +421,7 @@ def create_infotext(p, all_prompts, all_seeds, all_subseeds, comments, iteration
         "Eta": (None if p.sampler is None or p.sampler.eta == p.sampler.default_eta else p.sampler.eta),
         "Clip skip": None if clip_skip <= 1 else clip_skip,
         "ENSD": None if opts.eta_noise_seed_delta == 0 else opts.eta_noise_seed_delta,
+        "Total time to sample": None if total_time == None else total_time,
     }
 
     generation_params.update(p.extra_generation_params)
@@ -528,7 +542,9 @@ def process_images_inner(p: StableDiffusionProcessing) -> Processed:
                 shared.state.job = f"Batch {n+1} out of {p.n_iter}"
 
             with devices.autocast():
+                p.sampling_start = datetime.datetime.now()
                 samples_ddim = p.sample(conditioning=c, unconditional_conditioning=uc, seeds=seeds, subseeds=subseeds, subseed_strength=p.subseed_strength, prompts=prompts)
+                p.sampling_end = datetime.datetime.now()
 
             samples_ddim = samples_ddim.to(devices.dtype_vae)
             x_samples_ddim = decode_first_stage(p.sd_model, samples_ddim)
