@@ -29,12 +29,17 @@ samplers_k_diffusion = [
     ('DPM++ SDE', 'sample_dpmpp_sde', ['k_dpmpp_sde'], {}),
     ('DPM fast', 'sample_dpm_fast', ['k_dpm_fast'], {}),
     ('DPM adaptive', 'sample_dpm_adaptive', ['k_dpm_ad'], {}),
+    ('Euler a Karras', 'sample_euler_ancestral', ['k_euler_a_ka', 'k_euler_ancestral_ka'], {'scheduler': 'karras'}),
+    ('Euler Karras', 'sample_euler', ['k_euler_ka'], {'scheduler': 'karras'}),
     ('LMS Karras', 'sample_lms', ['k_lms_ka'], {'scheduler': 'karras'}),
+    ('Heun Karras', 'sample_heun', ['k_heun_ka'], {'scheduler': 'karras'}),
     ('DPM2 Karras', 'sample_dpm_2', ['k_dpm_2_ka'], {'scheduler': 'karras'}),
     ('DPM2 a Karras', 'sample_dpm_2_ancestral', ['k_dpm_2_a_ka'], {'scheduler': 'karras'}),
     ('DPM++ 2S a Karras', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a_ka'], {'scheduler': 'karras'}),
     ('DPM++ 2M Karras', 'sample_dpmpp_2m', ['k_dpmpp_2m_ka'], {'scheduler': 'karras'}),
     ('DPM++ SDE Karras', 'sample_dpmpp_sde', ['k_dpmpp_sde_ka'], {'scheduler': 'karras'}),
+    ('DPM fast Karras', 'sample_dpm_fast', ['k_dpm_fast_ka'], {'scheduler': 'karras'}),
+    ('DPM adaptive Karras', 'sample_dpm_adaptive', ['k_dpm_ad_ka'], {'scheduler': 'karras'}),
 ]
 
 samplers_data_k_diffusion = [
