@@ -1,4 +1,4 @@
-name: automatic1111
+name: web-ui
 channels:
   - apple
   - conda-forge
