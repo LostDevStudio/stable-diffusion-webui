@@ -1,0 +1,51 @@
+name: automatic1111
+channels:
+  - apple
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.12
+  - pip=22.1.2
+  - pip:
+    - accelerate
+    - basicsr
+    - diffusers
+    - fairscale==0.4.4
+    - fonts
+    - font-roboto
+    - gfpgan
+    - gradio==3.9
+    - invisible-watermark
+    - numpy
+    - omegaconf
+    - opencv-python
+    - requests
+    - piexif
+    - Pillow
+    - pytorch_lightning==1.7.7
+    - realesrgan
+    - scikit-image>=0.19
+    - timm==0.4.12
+    - transformers==4.19.2
+    - torch==1.12.1
+    - torchvision==0.13.1
+    - einops
+    - jsonmerge
+    - clean-fid
+    - resize-right
+    - torchdiffeq
+    - kornia
+    - lark
+    - inflection
+    - GitPython
+    - torchsde
+    - git+https://github.com/openai/CLIP.git@d50d76daa670286dd6cacf3bcd80b5e4823fc8e1
+    - git+https://github.com/TencentARC/GFPGAN.git@8d2447a2d918f8eba5a4a01463fd48e45126a379
+    - gdown
+    - fastapi
+    - psutil
+    - open_clip_torch
+    - safetensors
+variables:
+  COMMANDLINE_ARGS: "--skip-torch-cuda-test"
+  PYTORCH_ENABLE_MPS_FALLBACK: 1
